@@ -443,13 +443,13 @@ export default function CandlestickChart({
     const priceDiff = startPrice - endPrice
 
     // Draw the main trend line
+    // ctx.lineWidth = 0.5;
     ctx.beginPath()
     ctx.moveTo(drawing.start.x, drawing.start.y)
     ctx.lineTo(drawing.end.x, drawing.end.y)
     ctx.stroke()
-
     // Draw fibonacci levels
-    ctx.font = "10px Arial"
+    ctx.font = "8px Arial"
     ctx.textAlign = "right"
 
     drawing.levels.forEach((level) => {

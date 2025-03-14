@@ -32,7 +32,7 @@ export default function TradingView({
 }: TradingViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [scale, setScale] = useState(1)
+  const [scale, setScale] = useState(2.1)
   const [offset, setOffset] = useState(0)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState(0)

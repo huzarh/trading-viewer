@@ -10,6 +10,7 @@ import rawPriceData from "@/data/price.json"
 import type { DrawingToolType } from "@/lib/drawing-tools"
 import { transformPriceData } from "@/lib/data-transform"
 import type { PriceData } from "@/types/price-data"
+import { Loader2 } from "lucide-react"
 
 export default function Home() {
   const [priceData, setPriceData] = useState<PriceData[]>([])
@@ -19,11 +20,19 @@ export default function Home() {
   const [alerts, setAlerts] = useState<Array<{ price: number; id: string }>>([])
   const [isReplayMode, setIsReplayMode] = useState(false)
   const [replayIndex, setReplayIndex] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Transform the raw price data when the component mounts
-    const transformedData = transformPriceData(rawPriceData)
-    setPriceData(transformedData)
+    setIsLoading(true)
+    try {
+      const transformedData = transformPriceData(rawPriceData)
+      setPriceData(transformedData)
+    } catch (error) {
+      console.error("Error transforming price data:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
   const handleDrawingToolSelect = (tool: DrawingToolType) => {
@@ -49,9 +58,27 @@ export default function Home() {
     }
   }
 
+  // Show a professional loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+        <h2 className="text-xl font-medium">Loading Market Data</h2>
+        <p className="text-muted-foreground mt-2">Please wait while we retrieve the latest pricing information</p>
+      </div>
+    )
+  }
+
   // Don't render until we have price data
   if (priceData.length === 0) {
-    return <div className="flex items-center justify-center h-screen">Loading price data...</div>
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <h2 className="text-xl font-medium text-red-500">Data Error</h2>
+        <p className="text-muted-foreground mt-2">
+          Unable to load price data. Please check your connection and try again.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -77,10 +104,10 @@ export default function Home() {
           />
 
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
-            <button className="px-6 py-3 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition-colors">
+            <button className="px-6 py-3 rounded-md bg-red-600 text-white font-bold hover:bg-red-700 transition-colors shadow-lg">
               SELL
             </button>
-            <button className="px-6 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
+            <button className="px-6 py-3 rounded-md bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg">
               BUY
             </button>
           </div>
