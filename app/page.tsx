@@ -1,0 +1,103 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import TradingView from "@/components/trading-view"
+import TopToolbar from "@/components/top-toolbar"
+import LeftSidebar from "@/components/left-sidebar"
+import RightSidebar from "@/components/right-sidebar"
+import BottomPanel from "@/components/bottom-panel"
+import rawPriceData from "@/data/price.json"
+import type { DrawingToolType } from "@/lib/drawing-tools"
+import { transformPriceData } from "@/lib/data-transform"
+import type { PriceData } from "@/types/price-data"
+
+export default function Home() {
+  const [priceData, setPriceData] = useState<PriceData[]>([])
+  const [activeDrawingTool, setActiveDrawingTool] = useState<DrawingToolType | null>(null)
+  const [activeTimeframe, setActiveTimeframe] = useState("1D")
+  const [isLogScale, setIsLogScale] = useState(false)
+  const [alerts, setAlerts] = useState<Array<{ price: number; id: string }>>([])
+  const [isReplayMode, setIsReplayMode] = useState(false)
+  const [replayIndex, setReplayIndex] = useState(0)
+
+  useEffect(() => {
+    // Transform the raw price data when the component mounts
+    const transformedData = transformPriceData(rawPriceData)
+    setPriceData(transformedData)
+  }, [])
+
+  const handleDrawingToolSelect = (tool: DrawingToolType) => {
+    setActiveDrawingTool((prev) => (prev === tool ? null : tool))
+  }
+
+  const handleAddAlert = (price: number) => {
+    setAlerts((prev) => [...prev, { price, id: Math.random().toString(36).substr(2, 9) }])
+  }
+
+  const handleRemoveAlert = (id: string) => {
+    setAlerts((prev) => prev.filter((alert) => alert.id !== id))
+  }
+
+  const toggleReplayMode = () => {
+    setIsReplayMode((prev) => !prev)
+    setReplayIndex(0)
+  }
+
+  const advanceReplay = () => {
+    if (replayIndex < priceData.length - 1) {
+      setReplayIndex((prev) => prev + 1)
+    }
+  }
+
+  // Don't render until we have price data
+  if (priceData.length === 0) {
+    return <div className="flex items-center justify-center h-screen">Loading price data...</div>
+  }
+
+  return (
+    <main className="flex flex-col h-screen overflow-hidden bg-background">
+      <TopToolbar
+        activeDrawingTool={activeDrawingTool}
+        onDrawingToolSelect={handleDrawingToolSelect}
+        isReplayMode={isReplayMode}
+        toggleReplayMode={toggleReplayMode}
+        advanceReplay={advanceReplay}
+      />
+
+      <div className="flex flex-1 overflow-hidden">
+        <LeftSidebar activeDrawingTool={activeDrawingTool} onDrawingToolSelect={handleDrawingToolSelect} />
+
+        <div className="flex-1 relative">
+          <TradingView
+            data={isReplayMode ? priceData.slice(0, replayIndex + 1) : priceData}
+            isLogScale={isLogScale}
+            alerts={alerts}
+            onAddAlert={handleAddAlert}
+            activeDrawingTool={activeDrawingTool}
+          />
+
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
+            <button className="px-6 py-3 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition-colors">
+              SELL
+            </button>
+            <button className="px-6 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
+              BUY
+            </button>
+          </div>
+        </div>
+
+        <RightSidebar
+          activeTimeframe={activeTimeframe}
+          setActiveTimeframe={setActiveTimeframe}
+          isLogScale={isLogScale}
+          setIsLogScale={setIsLogScale}
+          alerts={alerts}
+          onRemoveAlert={handleRemoveAlert}
+        />
+      </div>
+
+      <BottomPanel isReplayMode={isReplayMode} />
+    </main>
+  )
+}
+
