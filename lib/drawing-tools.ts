@@ -8,6 +8,10 @@ export type DrawingToolType =
   | "sellposition"
   | "text"
   | "measure"
+  | "cursor-cross"
+  | "cursor-dot"
+  | "cursor-arrow"
+  | "cursor-eraser"
 
 export interface Point {
   x: number
@@ -47,7 +51,13 @@ export interface PositionDrawing extends BaseDrawing {
   timestamp: number
 }
 
-export type Drawing = LineDrawing | RectangleDrawing | FibonacciDrawing | PositionDrawing
+export interface MeasureDrawing extends BaseDrawing {
+  type: "measure"
+  start: Point
+  end: Point
+}
+
+export type Drawing = LineDrawing | RectangleDrawing | FibonacciDrawing | PositionDrawing | MeasureDrawing
 
 export const DEFAULT_FIBONACCI_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
 
@@ -61,6 +71,10 @@ export const DRAWING_COLORS = {
   sellposition: "#e74c3c",
   text: "#ffffff",
   measure: "#ffffff",
+  'cursor-cross': "#ffffff",
+  'cursor-dot': "#ffffff",
+  'cursor-arrow': "#ffffff",
+  'cursor-eraser': "#ffffff",
 }
 
 export function createDrawing(type: DrawingToolType, props: any): Drawing {
@@ -105,6 +119,14 @@ export function createDrawing(type: DrawingToolType, props: any): Drawing {
         price: props.price,
         size: props.size || 1,
         timestamp: props.timestamp,
+      }
+    case "measure":
+      return {
+        id,
+        type,
+        color,
+        start: props.start,
+        end: props.end,
       }
     default:
       throw new Error(`Unknown drawing tool type: ${type}`)

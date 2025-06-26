@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: 'Srofit Shelter ',
+  title: 'Profit Shelter +0.0040 (0.37%)',
   description: 'Profit Shelter virsion 1.0',
   generator: 'üzeyir.dev',
+  icons:"fovicon.ico",
+  keywords: ['Profit Shelter', 'Trading', 'Finance', 'Investment'],
   openGraph: {
     title: "Profit Shelter virsion 1.0", // Paylaşım başlığı
     description: "test version", // Kısa açıklama
@@ -26,7 +29,7 @@ export const metadata: Metadata = {
     card: "summary_large_image", // Büyük görsel kart tipi
     title: "Profit Shelter virsion 1.0", // Twitter için başlık
     description: "Stream your favorite movies and TV series in HD quality",
-    image: "https://www.ironfx.com/wp-content/uploads/2022/10/barcharts-blue-forex-market.jpg",
+    images: ["https://www.ironfx.com/wp-content/uploads/2022/10/barcharts-blue-forex-market.jpg"],
   },
 }
 
@@ -37,7 +40,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <head>
+        <link rel="icon" href="/fovicon.ico" type="image/x-icon" />
+      </head>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

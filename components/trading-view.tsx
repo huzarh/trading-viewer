@@ -21,6 +21,9 @@ interface TradingViewProps {
   alerts: Array<{price: number, id: string}>
   onAddAlert: (price: number) => void
   activeDrawingTool: DrawingToolType | null
+  onDrawingFinished?: () => void
+  drawings?: any[]
+  setDrawings?: (fn: any) => void
 }
 
 export default function TradingView({ 
@@ -28,7 +31,10 @@ export default function TradingView({
   isLogScale, 
   alerts, 
   onAddAlert,
-  activeDrawingTool 
+  activeDrawingTool,
+  onDrawingFinished,
+  drawings = [],
+  setDrawings
 }: TradingViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -36,7 +42,6 @@ export default function TradingView({
   const [offset, setOffset] = useState(0)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState(0)
-  const [drawings, setDrawings] = useState<Drawing[]>([])
 
   // Update dimensions on resize
   useEffect(() => {
@@ -92,12 +97,37 @@ export default function TradingView({
   }
 
   const handleAddDrawing = (drawing: Drawing) => {
-    setDrawings(prev => [...prev, drawing])
+    if (!setDrawings) return;
+    setDrawings((prev: Drawing[]) => [...prev, drawing])
   }
 
   const handleRemoveDrawing = (id: string) => {
-    setDrawings(prev => prev.filter(d => d.id !== id))
+    if (!setDrawings) return;
+    setDrawings((prev: Drawing[]) => prev.filter(d => d.id !== id))
   }
+
+  const handleUndo = () => {
+    if (!setDrawings) return;
+    setDrawings([])
+  }
+
+  const handleRedo = () => {
+    // Redo desteği için ek state gerekebilir, şimdilik boş bırak
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        handleUndo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div 
@@ -123,11 +153,17 @@ export default function TradingView({
               onScaleChange={handleScaleChange}
               onAddDrawing={handleAddDrawing}
               drawings={drawings}
+              setDrawings={setDrawings}
+              onRemoveDrawing={handleRemoveDrawing}
+              onOffsetChange={setOffset}
+              onDrawingFinished={onDrawingFinished}
             />
             <ChartControls 
               onZoomIn={handleZoomIn}
               onZoomOut={handleZoomOut}
               onReset={handleReset}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
             />
           </div>
           <div className="h-[100px]">

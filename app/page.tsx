@@ -6,11 +6,17 @@ import TopToolbar from "@/components/top-toolbar"
 import LeftSidebar from "@/components/left-sidebar"
 import RightSidebar from "@/components/right-sidebar"
 import BottomPanel from "@/components/bottom-panel"
-import rawPriceData from "@/data/price.json"
 import type { DrawingToolType } from "@/lib/drawing-tools"
 import { transformPriceData } from "@/lib/data-transform"
 import type { PriceData } from "@/types/price-data"
 import { Loader2 } from "lucide-react"
+
+const DATA_FILES = [
+  { label: "EUR/USD", value: "price.json" },
+  { label: "BTC/USDT", value: "BTCUSDT_M1.json" },
+  { label: "VETUSDT", value: "VETUSDT_M15.json"},
+
+]
 
 export default function Home() {
   const [priceData, setPriceData] = useState<PriceData[]>([])
@@ -21,22 +27,16 @@ export default function Home() {
   const [isReplayMode, setIsReplayMode] = useState(false)
   const [replayIndex, setReplayIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    // Transform the raw price data when the component mounts
-    setIsLoading(true)
-    try {
-      const transformedData = transformPriceData(rawPriceData)
-      setPriceData(transformedData)
-    } catch (error) {
-      console.error("Error transforming price data:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const [drawings, setDrawings] = useState<any[]>([])
+  const [selectedDataFile, setSelectedDataFile] = useState<string>("price.json")
+  const [rawPriceData, setRawPriceData] = useState<any>(null)
 
   const handleDrawingToolSelect = (tool: DrawingToolType) => {
     setActiveDrawingTool((prev) => (prev === tool ? null : tool))
+  }
+
+  const handleDrawingFinished = () => {
+    setActiveDrawingTool('cursor-cross')
   }
 
   const handleAddAlert = (price: number) => {
@@ -57,6 +57,22 @@ export default function Home() {
       setReplayIndex((prev) => prev + 1)
     }
   }
+
+  useEffect(() => {
+    setIsLoading(true)
+    import(`@/data/${selectedDataFile}`)
+      .then((mod) => {
+        setRawPriceData(mod.default)
+        const transformedData = transformPriceData(mod.default)
+        setPriceData(transformedData)
+      })
+      .catch((error) => {
+        setRawPriceData(null)
+        setPriceData([])
+        console.error("Error loading data file:", error)
+      })
+      .finally(() => setIsLoading(false))
+  }, [selectedDataFile])
 
   // Show a professional loading state
   if (isLoading) {
@@ -89,10 +105,16 @@ export default function Home() {
         isReplayMode={isReplayMode}
         toggleReplayMode={toggleReplayMode}
         advanceReplay={advanceReplay}
+        drawings={drawings}
+        setDrawings={setDrawings}
+        selectedDataFile={selectedDataFile}
+        setSelectedDataFile={setSelectedDataFile}
+        dataFiles={DATA_FILES}
+        rawPriceData={rawPriceData}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <LeftSidebar activeDrawingTool={activeDrawingTool} onDrawingToolSelect={handleDrawingToolSelect} />
+        <LeftSidebar activeDrawingTool={activeDrawingTool} onDrawingToolSelect={handleDrawingToolSelect} drawings={drawings} setDrawings={setDrawings} />
 
         <div className="flex-1 relative">
           <TradingView
@@ -101,6 +123,9 @@ export default function Home() {
             alerts={alerts}
             onAddAlert={handleAddAlert}
             activeDrawingTool={activeDrawingTool}
+            onDrawingFinished={handleDrawingFinished}
+            drawings={drawings}
+            setDrawings={setDrawings}
           />
 
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
