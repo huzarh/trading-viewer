@@ -6,6 +6,7 @@ import TopToolbar from "@/components/top-toolbar"
 import LeftSidebar from "@/components/left-sidebar"
 import RightSidebar from "@/components/right-sidebar"
 import BottomPanel from "@/components/bottom-panel"
+import AnalystBot from "@/components/analyst-bot"
 import type { DrawingToolType } from "@/lib/drawing-tools"
 import { transformPriceData } from "@/lib/data-transform"
 import type { PriceData } from "@/types/price-data"
@@ -17,6 +18,23 @@ const DATA_FILES = [
   { label: "VETUSDT", value: "VETUSDT_M15.json"},
 
 ]
+
+// Timeframe kodunu dosya adı için dönüştür
+const TIMEFRAME_TO_SUFFIX = {
+  '1M': 'M1',
+  '5M': 'M5',
+  '15M': 'M15',
+  '30M': 'M30',
+  '1H': 'H1',
+  '4H': 'H4',
+  '1D': 'D1',
+  '1W': 'W1',
+};
+
+function getSymbolFromFile(file: any) {
+  // "BTCUSDT_M1.json" -> "BTCUSDT"
+  return file.split('_')[0];
+}
 
 export default function Home() {
   const [priceData, setPriceData] = useState<PriceData[]>([])
@@ -30,6 +48,18 @@ export default function Home() {
   const [drawings, setDrawings] = useState<any[]>([])
   const [selectedDataFile, setSelectedDataFile] = useState<string>("price.json")
   const [rawPriceData, setRawPriceData] = useState<any>(null)
+
+  const tfSuffix = TIMEFRAME_TO_SUFFIX[activeTimeframe as keyof typeof TIMEFRAME_TO_SUFFIX] || 'M1';
+  let dynamicDataFile = selectedDataFile;
+  if (selectedDataFile === 'price.json') {
+    dynamicDataFile = selectedDataFile;
+  } else if (selectedDataFile.endsWith('.json') && /_[MDHW]\d*\.json$/.test(selectedDataFile)) {
+    dynamicDataFile = selectedDataFile;
+  } else if (selectedDataFile.endsWith('.json')) {
+    dynamicDataFile = selectedDataFile.replace('.json', `_${tfSuffix}.json`);
+  } else {
+    dynamicDataFile = `${selectedDataFile}_${tfSuffix}.json`;
+  }
 
   const handleDrawingToolSelect = (tool: DrawingToolType) => {
     setActiveDrawingTool((prev) => (prev === tool ? null : tool))
@@ -60,7 +90,7 @@ export default function Home() {
 
   useEffect(() => {
     setIsLoading(true)
-    import(`@/data/${selectedDataFile}`)
+    import(`@/data/${dynamicDataFile}`)
       .then((mod) => {
         setRawPriceData(mod.default)
         const transformedData = transformPriceData(mod.default)
@@ -72,7 +102,7 @@ export default function Home() {
         console.error("Error loading data file:", error)
       })
       .finally(() => setIsLoading(false))
-  }, [selectedDataFile])
+  }, [dynamicDataFile])
 
   // Show a professional loading state
   if (isLoading) {
@@ -149,6 +179,7 @@ export default function Home() {
       </div>
 
       <BottomPanel isReplayMode={isReplayMode} />
+      <AnalystBot />
     </main>
   )
 }

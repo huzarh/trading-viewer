@@ -89,6 +89,8 @@ export default function LeftSidebar({ activeDrawingTool, onDrawingToolSelect, dr
           ))}
         </TooltipProvider>
       </div>
+      <hr className="my-3 w-10 border-t border-border/80" />
+
       <div className="mb-2">
         <TooltipProvider>
           <Tooltip>
